@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#07040f">
+  <meta name="description" content="Neon Dash: un runner de ritmo y reflejos para móvil y tablet. Toca para saltar o inclina el dispositivo.">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Neon Dash">
+  <title>Neon Dash · Toca, salta, sobrevive</title>
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="app">
+    <canvas id="gameCanvas" role="img" aria-label="Pista de Neon Dash. Toca para saltar y esquivar obstáculos."></canvas>
+    <div class="screen-fx" aria-hidden="true"></div>
+
+    <div id="hud" class="hud hidden" aria-hidden="true">
+      <div class="hud-top">
+        <div class="hud-level">
+          <span class="hud-kicker">NIVEL</span>
+          <strong id="hudLevelName">PRISMA</strong>
+          <span id="hudAttempt" class="hud-attempt">Intento 1</span>
+        </div>
+        <div class="hud-progress">
+          <div class="progress-track" role="progressbar" aria-label="Progreso del nivel" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="progressTrack">
+            <div id="progressFill" class="progress-fill"></div>
+            <span id="progressPct" class="progress-pct">0%</span>
+          </div>
+          <div class="hud-sub">
+            <span id="hudCoins" class="hud-coins">◈ 0/3</span>
+            <span id="hudBest" class="hud-best">Mejor 0%</span>
+          </div>
+        </div>
+        <div class="hud-actions">
+          <button id="pauseBtn" class="icon-btn hud-pause" type="button" aria-label="Pausar partida">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="5" width="3.6" height="14" rx="1.4"></rect><rect x="13.4" y="5" width="3.6" height="14" rx="1.4"></rect></svg>
+          </button>
+        </div>
+      </div>
+      <div id="tiltMeter" class="tilt-meter hidden" aria-hidden="true">
+        <span class="tilt-label">TILT</span>
+        <span class="tilt-bar"><i id="tiltDot"></i></span>
+      </div>
+      <div id="tapHint" class="tap-hint">Toca para saltar</div>
+    </div>
+
+    <section id="menuScreen" class="screen menu-screen" aria-labelledby="gameTitle">
+      <div class="menu-inner">
+        <header class="brand">
+          <p class="brand-badge">RITMO · REFLEJOS · NEÓN</p>
+          <h1 id="gameTitle" class="logo"><span>NEON</span><span>DASH</span></h1>
+          <p class="tagline">Un toque. Un salto. Cero segundas oportunidades.</p>
+        </header>
+
+        <div id="levelStrip" class="level-strip" role="radiogroup" aria-label="Elige un nivel"></div>
+
+        <button id="playBtn" class="primary-btn play-btn" type="button">
+          <span class="play-icon" aria-hidden="true">▶</span>
+          <span>JUGAR</span>
+          <small id="playLevelLabel">PRISMA</small>
+        </button>
+
+        <nav class="menu-links" aria-label="Opciones del menú">
+          <button id="howBtn" class="ghost-btn" type="button">Cómo jugar</button>
+          <button id="settingsBtn" class="ghost-btn" type="button">Ajustes</button>
+          <button id="quickSound" class="icon-btn" type="button" aria-label="Silenciar sonido" aria-pressed="false">
+            <svg class="icon-sound" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z"></path><path class="sound-wave" d="M16 8.5a5 5 0 0 1 0 7"></path><path class="sound-wave" d="M18.5 6a8.5 8.5 0 0 1 0 12"></path><path class="sound-off" d="M16 9l5 6m0-6l-5 6"></path></svg>
+          </button>
+        </nav>
+
+        <p class="menu-foot">
+          <span id="globalBest">Mejor global 0%</span>
+          <span class="foot-dot" aria-hidden="true">·</span>
+          <span id="globalAttempts">0 intentos</span>
+          <span class="foot-dot" aria-hidden="true">·</span>
+          <span>3 niveles</span>
+        </p>
+      </div>
+    </section>
+
+    <section id="deathScreen" class="death-screen hidden" aria-labelledby="deathTitle">
+      <div class="death-card">
+        <div class="death-spark" aria-hidden="true">✦</div>
+        <p class="panel-kicker">INTENTO FALLIDO</p>
+        <h2 id="deathTitle">Casi lo tienes</h2>
+        <p id="deathStats" class="death-stats">Llegaste al 0%</p>
+        <div class="death-actions">
+          <button id="retryBtn" class="primary-btn small" type="button">REINTENTAR</button>
+          <button id="deathMenuBtn" class="ghost-btn" type="button">Menú</button>
+        </div>
+        <p class="death-hint">Toca la pantalla para volver a intentarlo</p>
+      </div>
+    </section>
+
+    <section id="pauseScreen" class="screen overlay hidden" role="dialog" aria-modal="true" aria-labelledby="pauseTitle">
+      <div class="panel compact-panel">
+        <p class="panel-kicker">EN PAUSA</p>
+        <h2 id="pauseTitle">Respira.</h2>
+        <p class="panel-copy">El nivel te espera justo donde lo dejaste.</p>
+        <button id="resumeBtn" class="primary-btn" type="button">REANUDAR</button>
+        <button id="restartBtn" class="secondary-btn" type="button">Reiniciar nivel</button>
+        <button id="pauseSettingsBtn" class="ghost-btn" type="button">Ajustes</button>
+        <button id="quitBtn" class="ghost-btn" type="button">Salir al menú</button>
+      </div>
+    </section>
+
+    <section id="resultScreen" class="screen overlay hidden" role="dialog" aria-modal="true" aria-labelledby="resultTitle">
+      <div class="panel result-panel">
+        <div class="result-burst" aria-hidden="true">★</div>
+        <p class="panel-kicker">NIVEL COMPLETADO</p>
+        <h2 id="resultTitle">PRISMA</h2>
+        <p id="resultStats" class="panel-copy">100% · 0/3 monedas · 1 intento</p>
+        <div id="resultCoins" class="result-coins" aria-label="Monedas recogidas"></div>
+        <button id="nextBtn" class="primary-btn" type="button">SIGUIENTE NIVEL</button>
+        <button id="replayBtn" class="secondary-btn" type="button">Repetir nivel</button>
+        <button id="resultMenuBtn" class="ghost-btn" type="button">Menú</button>
+      </div>
+    </section>
+
+    <section id="settingsScreen" class="screen overlay hidden" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+      <div class="panel settings-panel">
+        <button id="settingsClose" class="icon-btn close-btn" type="button" aria-label="Cerrar ajustes">×</button>
+        <p class="panel-kicker">AJUSTES</p>
+        <h2 id="settingsTitle">Tu ritmo</h2>
+
+        <div class="setting-row">
+          <div class="setting-copy">
+            <strong>Efectos de sonido</strong>
+            <span>Saltos, monedas y choques</span>
+          </div>
+          <button id="soundToggle" class="switch" type="button" role="switch" aria-checked="true" aria-label="Efectos de sonido"><i></i></button>
+        </div>
+
+        <div class="setting-row">
+          <div class="setting-copy">
+            <strong>Música</strong>
+            <span>Secuencia synthwave generada en vivo</span>
+          </div>
+          <button id="musicToggle" class="switch" type="button" role="switch" aria-checked="true" aria-label="Música"><i></i></button>
+        </div>
+
+        <div class="setting-row">
+          <div class="setting-copy">
+            <strong>Inclinación para saltar</strong>
+            <span id="tiltStatus">Inclina el dispositivo para saltar</span>
+          </div>
+          <button id="tiltToggle" class="switch" type="button" role="switch" aria-checked="false" aria-label="Control por inclinación"><i></i></button>
+        </div>
+
+        <div id="tiltOptions" class="tilt-options hidden">
+          <label for="tiltSensitivity">Sensibilidad <output id="tiltSensitivityOut" for="tiltSensitivity">3</output></label>
+          <input id="tiltSensitivity" type="range" min="1" max="5" step="1" value="3" aria-describedby="motionHint">
+          <button id="calibrateBtn" class="secondary-btn small" type="button">Calibrar posición</button>
+          <p id="motionHint" class="hint">En iPhone/iPad se pedirá permiso al activar. Mantén el dispositivo cómodo y pulsa Calibrar.</p>
+        </div>
+
+        <div class="setting-row">
+          <div class="setting-copy">
+            <strong>Vibración</strong>
+            <span>Respuesta táctil si el dispositivo la soporta</span>
+          </div>
+          <button id="hapticsToggle" class="switch" type="button" role="switch" aria-checked="true" aria-label="Vibración"><i></i></button>
+        </div>
+
+        <div class="setting-row">
+          <div class="setting-copy">
+            <strong>Menos movimiento</strong>
+            <span>Reduce partículas, brillos y sacudidas</span>
+          </div>
+          <button id="motionToggle" class="switch" type="button" role="switch" aria-checked="false" aria-label="Menos movimiento"><i></i></button>
+        </div>
+
+        <button id="resetProgress" class="danger-link" type="button">Borrar progreso</button>
+        <p class="settings-foot">Hecho para jugar con una mano. También funciona con teclado.</p>
+      </div>
+    </section>
+
+    <section id="howScreen" class="screen overlay hidden" role="dialog" aria-modal="true" aria-labelledby="howTitle">
+      <div class="panel how-panel">
+        <button id="howClose" class="icon-btn close-btn" type="button" aria-label="Cerrar ayuda">×</button>
+        <p class="panel-kicker">CÓMO JUGAR</p>
+        <h2 id="howTitle">Un toque. Un salto.</h2>
+        <ul class="how-list">
+          <li><b>Toca</b> en cualquier parte de la pista para saltar. Mantén pulsado para saltar en cuanto aterrices.</li>
+          <li>Esquiva pinchos, sierras y bloques. Los huecos de la pista no perdonan.</li>
+          <li>Recoge las <b>3 monedas</b> de cada nivel si quieres el reto extra. Terminar es lo que cuenta.</li>
+          <li>Activa <b>Inclinación</b> en Ajustes para saltar inclinando el dispositivo. En iOS, acepta el permiso de movimiento cuando aparezca.</li>
+          <li>Escritorio: <kbd>Espacio</kbd> o <kbd>↑</kbd> para saltar, <kbd>Esc</kbd> para pausar, <kbd>R</kbd> para reiniciar.</li>
+        </ul>
+        <div class="how-note">Consejo: la constancia gana. Cada intento cuenta y tu mejor porcentaje se guarda solo.</div>
+        <button id="howUnderstood" class="primary-btn" type="button">ENTENDIDO</button>
+      </div>
+    </section>
+
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>

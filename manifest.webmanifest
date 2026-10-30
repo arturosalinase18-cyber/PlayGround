@@ -1,0 +1,19 @@
+{
+  "name": "Neon Dash",
+  "short_name": "Neon Dash",
+  "description": "Runner de ritmo y reflejos para móvil y tablet. Toca para saltar o inclina el dispositivo.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "fullscreen",
+  "orientation": "any",
+  "background_color": "#07040f",
+  "theme_color": "#07040f",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
